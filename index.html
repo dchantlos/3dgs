@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Gaussian Splat Explorer</title>
+    <meta name="description" content="A cinematic explorer for ArcGIS Gaussian Splat reality captures, built on the ArcGIS Maps SDK for JavaScript 5.1." />
+    <link rel="preconnect" href="https://tiles.arcgis.com" crossorigin />
+    <link rel="preconnect" href="https://IVT.maps.arcgis.com" crossorigin />
+    <style>
+      /* Critical first-paint styles: avoid a white flash and an unstyled boot
+         (giant logo / invisible title) before the bundled CSS loads. */
+      html, body { margin: 0; height: 100%; background: #060910; }
+      .boot {
+        position: fixed; inset: 0; z-index: 100;
+        display: grid; place-items: center;
+        background:
+          radial-gradient(1200px 700px at 70% 20%, rgba(63, 224, 208, 0.10), transparent 60%),
+          radial-gradient(900px 600px at 20% 90%, rgba(123, 147, 255, 0.12), transparent 60%),
+          #05070d;
+      }
+      .boot__inner { display: flex; align-items: center; gap: 22px; }
+      .boot__logo { height: 84px; width: auto; filter: drop-shadow(0 6px 26px rgba(63, 224, 208, 0.3)); }
+      .boot__text {
+        display: flex; flex-direction: column; gap: 3px;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      .boot__title { font-size: 23px; font-weight: 700; letter-spacing: -0.01em; color: #eaf0f8; }
+      .boot__status { font-size: 13px; color: #93a2ba; }
+    </style>
+  </head>
+  <body>
+    <!-- 3D scene -->
+    <div id="viewDiv"></div>
+
+    <!-- Loading / boot overlay -->
+    <div id="boot" class="boot">
+      <div class="boot__inner">
+        <img class="boot__logo" src="/esri-logo.png" alt="Esri" />
+        <div class="boot__text">
+          <strong class="boot__title">Gaussian Splats</strong>
+          <span id="bootStatus" class="boot__status">Preparing the scene…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand -->
+    <header class="brandbar">
+      <div class="brand">
+        <img class="brand__mark" src="/esri-logo.png" alt="Esri" />
+        <span class="brand__type">
+          <strong>Gaussian Splats</strong>
+          <a class="brand__sub" href="https://www.esri.com/en-us/arcgis/products/arcgis-reality/overview" target="_blank" rel="noopener noreferrer">Processed by ArcGIS Reality</a>
+        </span>
+      </div>
+    </header>
+
+    <!-- Capture gallery -->
+    <aside id="galleryPanel" class="panel gallery">
+      <div class="gallery__head">
+        <div class="panel__kicker">Reality captures</div>
+        <h1 class="panel__title">Explore the world in splats</h1>
+        <div id="filterChips" class="chips" role="tablist" aria-label="Filter captures"></div>
+      </div>
+      <div id="captureList" class="cards" role="list"></div>
+    </aside>
+    <button id="galleryCollapse" title="Hide panel" aria-label="Hide panel">‹</button>
+
+    <!-- Tools dock -->
+    <nav id="toolsDock" class="dock" aria-label="Reality inspection tools">
+      <button class="dock__btn" data-tool="slice" title="Cut a movable plane through the capture">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M2 13h20"/></svg><em>Slice</em></button>
+      <button class="dock__btn" data-tool="los" title="Test visibility between an observer and a target">
+        <svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg><em>Sightline</em></button>
+      <button class="dock__btn" data-tool="elevation" title="Profile the surface along a drawn line">
+        <svg viewBox="0 0 24 24"><path d="M3 16l4-4 3 2 4-6 3 4 4-3"/><path d="M3 20h18"/></svg><em>Profile</em></button>
+      <button class="dock__btn" data-tool="measure" title="Measure a straight-line 3D distance">
+        <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></svg><em>Measure</em></button>
+      <span class="dock__sep"></span>
+      <button class="dock__btn dock__btn--ghost" data-tool="reset" title="Re-frame the current capture">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 10-2.6 5.9"/><path d="M20 20v-5h-5"/></svg><em>Reset</em></button>
+    </nav>
+
+    <!-- Tool panels (populated / toggled by JS) -->
+    <section id="toolPanels" class="toolpanels" aria-live="polite"></section>
+
+    <!-- Tour transport -->
+    <div id="tourBar" class="tourbar">
+      <button id="tourPrev" class="tourbar__nav" title="Previous" aria-label="Previous capture">‹</button>
+      <button id="tourPlay" class="tourbar__play" title="Play guided tour" aria-label="Play guided tour">
+        <span class="tourbar__playicon"></span>
+      </button>
+      <button id="tourNext" class="tourbar__nav" title="Next" aria-label="Next capture">›</button>
+      <div class="tourbar__meta">
+        <span id="tourTitle" class="tourbar__title">—</span>
+        <span id="tourSub" class="tourbar__sub">Select a capture to begin</span>
+      </div>
+      <div class="tourbar__progress"><i id="tourProgress"></i></div>
+    </div>
+
+    <!-- Powered by Esri -->
+    <a class="esri-badge" href="https://www.esri.com" target="_blank" rel="noopener noreferrer" title="Powered by Esri ArcGIS">
+      <span>Powered by Esri</span>
+    </a>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
