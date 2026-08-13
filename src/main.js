@@ -32,7 +32,7 @@ initHud(view);
 const minimap = initMinimap();
 
 view.when(async () => {
-  setBoot("Loading reality capture…");
+  setBoot("Loading reality mapping…");
   await selectCapture(firstCapture, { intro: true });
   hideBoot();
   fx.reveal(currentCapture, { intro: true });
