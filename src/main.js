@@ -15,7 +15,6 @@ import { initTools, closeWidget } from "./tools.js";
 import { applyAccent } from "./theme.js";
 import { initHud } from "./hud.js";
 import { initFx } from "./fx.js";
-import { initCursor } from "./cursor.js";
 import { initMinimap } from "./minimap.js";
 import { initWeather } from "./weather.js";
 
@@ -27,7 +26,6 @@ const view = bootScene();
 initGallery(selectCapture);
 initTour(selectCapture);
 initTools({ onReset });
-initCursor();
 const fx = initFx();
 initHud(view);
 const minimap = initMinimap();
