@@ -27,6 +27,22 @@
       }
       .boot__title { font-size: 23px; font-weight: 700; letter-spacing: -0.01em; color: #eaf0f8; }
       .boot__status { font-size: 13px; color: #93a2ba; }
+
+      /* Portrait lock: on a phone held in landscape, cover the UI with a rotate
+         prompt. Keyed on a short landscape viewport so desktops never match. */
+      .rotate-gate { display: none; }
+      @media (orientation: landscape) and (max-height: 500px) {
+        .rotate-gate {
+          display: flex; position: fixed; inset: 0; z-index: 300;
+          flex-direction: column; align-items: center; justify-content: center;
+          gap: 14px; padding: 26px; text-align: center;
+          background: #060910; color: #eaf0f8;
+          font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .rotate-gate__icon { width: 50px; height: 50px; color: #3fe0d0; }
+        .rotate-gate__title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+        .rotate-gate__text { margin: 0; font-size: 13.5px; line-height: 1.45; color: #93a2ba; max-width: 260px; }
+      }
     </style>
   </head>
   <body>
@@ -42,6 +58,17 @@
           <span id="bootStatus" class="boot__status">Preparing the scene…</span>
         </div>
       </div>
+    </div>
+
+    <!-- Portrait-only gate: shown when a phone is held in landscape -->
+    <div id="rotateGate" class="rotate-gate" role="alertdialog" aria-label="Please rotate your device to portrait">
+      <svg class="rotate-gate__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="2.5" width="6" height="12" rx="1.4"/>
+        <path d="M12 22a9.5 9.5 0 0 0 9.5-9.5"/>
+        <path d="M12 22l2.6-1.2M12 22l-1.2-2.6"/>
+      </svg>
+      <strong class="rotate-gate__title">Rotate your device</strong>
+      <p class="rotate-gate__text">This experience is designed for portrait view.</p>
     </div>
 
     <!-- Brand -->
