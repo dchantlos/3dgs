@@ -166,4 +166,14 @@ export const SCENE_GLOW = 0.65;      // webscene/Glow intensity (0..1)
 export const FLY_MS = 3200;          // camera fly duration
 export const TOUR_DWELL_MS = 5200;   // pause at each tour stop
 
+// Extra scene settings mirrored from the source web scene so splats sit correctly.
+// Per-capture absolute-height offsets (m) so georeferenced splats don't sink into the terrain.
+export const ELEVATION_OFFSETS = {
+  phoenix: 1, denver: 3, roaster: 1, alcatraz: 16, "building-2019": 2, cathedral: 0.5, stuttgart: 1
+};
+// Pre-construction terrain used only by the Building E 2019 capture.
+export const BUILDING_E_TERRAIN_URL = "https://tiles.arcgis.com/tiles/uujCiiEZAflDbdxE/arcgis/rest/services/20190919_EsriBuildingE_Elevation/ImageServer";
+// Animated water body shown only for the Alcatraz capture.
+export const ALCATRAZ_WATER_URL = "https://services1.arcgis.com/uujCiiEZAflDbdxE/arcgis/rest/services/Alcatraz_with_Waterbody_Global_WFL1/FeatureServer/0";
+
 export const byId = (id) => CAPTURES.find((c) => c.id === id);
