@@ -39,7 +39,7 @@ export function initMinimap() {
       </g>
     </svg>
     <div class="globe__label" id="globeLabel">—</div>`;
-  document.body.appendChild(root);
+  (document.getElementById("cornerStack") || document.body).appendChild(root);
 
   projection = geoOrthographic().scale(R).translate([C, C]).clipAngle(90);
   path = geoPath(projection);

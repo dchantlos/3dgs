@@ -17,6 +17,7 @@ import { initHud } from "./hud.js";
 import { initFx } from "./fx.js";
 import { initCursor } from "./cursor.js";
 import { initMinimap } from "./minimap.js";
+import { initWeather } from "./weather.js";
 
 let currentCapture = null;
 let selecting = false;
@@ -30,6 +31,7 @@ initCursor();
 const fx = initFx();
 initHud(view);
 const minimap = initMinimap();
+const weather = initWeather(view);
 
 view.when(async () => {
   setBoot("Loading reality mapping…");
@@ -50,6 +52,7 @@ async function selectCapture(capture, { fromTour = false, intro = false } = {}) 
     setTourCurrent(capture.id);
     applyAccent(capture);
     minimap.goTo(capture, { animate: !intro });
+    weather.update(capture);
     if (!intro) fx.reveal(capture);
 
     setLoading(true, `Loading ${capture.title}…`);
