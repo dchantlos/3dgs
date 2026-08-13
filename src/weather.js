@@ -45,7 +45,7 @@ export function initWeather(view) {
     </div>
     <button class="wx__toggle" id="wxToggle" type="button" aria-pressed="false">
       <span class="wx__toggle-dot"></span>
-      <span id="wxToggleLabel">Show real-time weather effects</span>
+      <span>Real-time weather effects</span>
     </button>`;
   (document.getElementById("cornerStack") || document.body).appendChild(panel);
 
@@ -53,7 +53,7 @@ export function initWeather(view) {
   const ui = {
     icon: q("#wxIcon"), temp: q("#wxTemp"), cond: q("#wxCond"), dot: q("#wxDot"),
     wind: q("#wxWind"), rain: q("#wxRain"), hum: q("#wxHum"),
-    toggle: q("#wxToggle"), toggleLabel: q("#wxToggleLabel")
+    toggle: q("#wxToggle")
   };
 
   let effectsOn = false;
@@ -64,7 +64,6 @@ export function initWeather(view) {
   ui.toggle.addEventListener("click", () => {
     effectsOn = !effectsOn;
     ui.toggle.setAttribute("aria-pressed", String(effectsOn));
-    ui.toggleLabel.textContent = effectsOn ? "Hide weather effects" : "Show real-time weather effects";
     panel.classList.toggle("is-on", effectsOn);
     if (effectsOn) applyEffects();
     else view.environment.weather = new SunnyWeather({ cloudCover: 0 });
