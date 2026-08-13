@@ -31,8 +31,9 @@ export function initWeather(view) {
   panel.innerHTML = `
     <div class="wx__head">
       <span class="wx__icon" id="wxIcon">${ICONS.cloud}</span>
-      <div class="wx__now">
-        <strong class="wx__temp" id="wxTemp">—</strong>
+      <strong class="wx__temp" id="wxTemp">—</strong>
+      <div class="wx__meta">
+        <span class="wx__kicker">Real-Time Weather</span>
         <span class="wx__cond" id="wxCond">Weather</span>
       </div>
       <span class="wx__dot" id="wxDot" data-state="loading" title="Loading"></span>

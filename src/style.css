@@ -295,12 +295,13 @@ body.gallery-collapsed .fx__title { left: 40px; }
   border: 1px solid var(--stroke); box-shadow: var(--shadow);
   display: flex; flex-direction: column; gap: 10px;
 }
-.wx__head { display: flex; align-items: center; gap: 10px; }
+.wx__head { display: flex; align-items: center; gap: 8px; }
 .wx__icon { width: 30px; height: 30px; color: var(--accent); flex: 0 0 auto; }
 .wx__icon svg { width: 100%; height: 100%; display: block; }
-.wx__now { display: flex; flex-direction: column; line-height: 1.05; margin-right: auto; }
-.wx__temp { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; }
-.wx__cond { font-size: 11px; color: var(--muted); }
+.wx__temp { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; flex: 0 0 auto; }
+.wx__meta { display: flex; flex-direction: column; line-height: 1.25; margin-right: auto; min-width: 0; }
+.wx__kicker { font-size: 8px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+.wx__cond { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wx__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); flex: 0 0 auto; }
 .wx__dot[data-state="loading"] { background: var(--accent-3); box-shadow: 0 0 8px var(--accent-3); }
 .wx__dot[data-state="offline"] { background: #ff6b6b; box-shadow: none; }
