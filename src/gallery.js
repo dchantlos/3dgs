@@ -65,10 +65,13 @@ export function setActiveCard(id) {
 function wireCollapse() {
   const panel = document.getElementById("galleryPanel");
   const btn = document.getElementById("galleryCollapse");
-  btn.addEventListener("click", () => {
-    const collapsed = panel.classList.toggle("is-collapsed");
+  const setCollapsed = (collapsed) => {
+    panel.classList.toggle("is-collapsed", collapsed);
     document.body.classList.toggle("gallery-collapsed", collapsed);
     btn.textContent = collapsed ? "›" : "‹";
     btn.title = collapsed ? "Show panel" : "Hide panel";
-  });
+  };
+  btn.addEventListener("click", () => setCollapsed(!panel.classList.contains("is-collapsed")));
+  // Collapse by default on small/mobile screens; desktop stays open.
+  if (window.matchMedia("(max-width: 860px)").matches) setCollapsed(true);
 }

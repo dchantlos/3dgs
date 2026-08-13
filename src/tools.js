@@ -24,6 +24,31 @@ export function initTools(callbacks = {}) {
   document.querySelectorAll("#toolsDock .dock__btn").forEach((btn) => {
     btn.addEventListener("click", () => handle(btn.dataset.tool));
   });
+  wireDockCollapse();
+}
+
+// Mobile-only: a compact trigger that collapses/expands the vertical dock.
+function wireDockCollapse() {
+  const dock = document.getElementById("toolsDock");
+  if (!dock) return;
+  const toggle = document.createElement("button");
+  toggle.className = "dock__toggle";
+  toggle.type = "button";
+  toggle.title = "Tools";
+  toggle.setAttribute("aria-label", "Toggle tools");
+  toggle.setAttribute("aria-expanded", "true");
+  toggle.innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>';
+  dock.prepend(toggle);
+
+  const setCollapsed = (collapsed) => {
+    dock.classList.toggle("is-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.title = collapsed ? "Show tools" : "Hide tools";
+  };
+  toggle.addEventListener("click", () => setCollapsed(!dock.classList.contains("is-collapsed")));
+  // Start collapsed on small/mobile screens; desktop keeps the full dock.
+  if (window.matchMedia("(max-width: 860px)").matches) setCollapsed(true);
 }
 
 function handle(tool) {
