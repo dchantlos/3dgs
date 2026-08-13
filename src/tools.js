@@ -38,7 +38,8 @@ function wireDockCollapse() {
   toggle.setAttribute("aria-label", "Toggle tools");
   toggle.setAttribute("aria-expanded", "true");
   toggle.innerHTML =
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>';
+    '<svg class="dock__toggle-ico dock__toggle-ico--open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>' +
+    '<svg class="dock__toggle-ico dock__toggle-ico--close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M6 18L18 6"/></svg>';
   dock.prepend(toggle);
 
   const setCollapsed = (collapsed) => {
