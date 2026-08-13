@@ -11,13 +11,6 @@ import { SCENE_GLOW, FLY_MS, CAPTURES } from "./config.js";
 let view;
 const splatCache = new Map(); // capture.id -> GaussianSplatLayer
 
-// High-altitude opening shot so the first selection reads as a descent from space.
-const INTRO_CAMERA = new Camera({
-  position: new Point({ x: -10800000, y: 4600000, z: 9_500_000, spatialReference: { wkid: 102100 } }),
-  heading: 0,
-  tilt: 20
-});
-
 export function makeCamera(c) {
   return new Camera({
     position: new Point({ x: c.x, y: c.y, z: c.z, spatialReference: { wkid: 102100 } }),
@@ -36,7 +29,7 @@ export function bootScene() {
   view = new SceneView({
     container: "viewDiv",
     map,
-    camera: INTRO_CAMERA,
+    camera: makeCamera(CAPTURES[0].camera),
     qualityProfile: "high",
     popupEnabled: false,
     environment: {
@@ -86,11 +79,17 @@ export function setActiveSplat(capture, { keepIds = [] } = {}) {
   return layer;
 }
 
-// Resolve once the capture's tiles have finished their first draw.
-export async function whenCaptureReady(layer) {
-  const lv = await view.whenLayerView(layer);
-  await reactiveUtils.whenOnce(() => !lv.updating);
-  return lv;
+// Resolve once the capture's tiles have settled, or after `settleTimeout` ms so a large
+// tileset keeps streaming behind the UI instead of holding the loading screen open.
+export async function whenCaptureReady(layer, { settleTimeout = 9000 } = {}) {
+  const settled = view.whenLayerView(layer).then(async (lv) => {
+    await reactiveUtils.whenOnce(() => !lv.updating);
+    return lv;
+  });
+  return Promise.race([
+    settled,
+    new Promise((resolve) => setTimeout(resolve, settleTimeout))
+  ]);
 }
 
 export function flyTo(target, opts = {}) {

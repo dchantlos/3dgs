@@ -55,7 +55,7 @@ async function selectCapture(capture, { fromTour = false, intro = false } = {}) 
     setLoading(true, `Loading ${capture.title}…`);
     const layer = setActiveSplat(capture);
     flyTo(capture);
-    await guard(whenCaptureReady(layer));
+    await guard(whenCaptureReady(layer, { settleTimeout: intro ? 3000 : 9000 }));
   } finally {
     setLoading(false);
     selecting = false;
