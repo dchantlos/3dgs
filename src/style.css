@@ -182,10 +182,10 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
 
 /* ---------------- Tools dock ---------------- */
 .dock {
-  position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%); z-index: 32;
-  display: flex; flex-direction: row; gap: 4px; padding: 6px;
+  pointer-events: auto; align-self: flex-end;
+  display: flex; flex-direction: column; gap: 4px; padding: 8px;
   background: var(--panel); backdrop-filter: var(--glass); border: 1px solid var(--stroke);
-  border-radius: 16px; box-shadow: var(--shadow);
+  border-radius: 18px; box-shadow: var(--shadow);
 }
 .dock__btn {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -197,7 +197,7 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
 .dock__btn:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
 .dock__btn.is-on { background: rgba(63, 224, 208, 0.14); color: var(--accent); }
 .dock__btn--ghost { color: var(--faint); }
-.dock__sep { width: 1px; align-self: stretch; margin: 6px 4px; background: var(--stroke); }
+.dock__sep { height: 1px; margin: 4px 8px; background: var(--stroke); }
 
 /* ---------------- Tool panels ---------------- */
 .toolpanels { position: fixed; left: 50%; transform: translateX(-50%); bottom: 150px; z-index: 31; display: flex; flex-direction: column; gap: 10px; width: 322px; }
@@ -260,7 +260,6 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
 @media (max-width: 860px) {
   .gallery { width: min(340px, 82vw); bottom: 128px; }
   .tourbar { min-width: unset; width: min(94vw, 420px); }
-  .dock { bottom: 150px; }
   .toolpanels { left: 12px; right: 12px; transform: none; bottom: 210px; width: auto; }
 }
 
@@ -283,10 +282,10 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
 .hud__reticle span { position: absolute; background: rgba(var(--accent-rgb), 0.6); }
 .hud__reticle span:nth-child(1) { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
 .hud__reticle span:nth-child(2) { top: 50%; left: 0; height: 1px; width: 100%; transform: translateY(-50%); }
-.hud__readout { position: absolute; right: 20px; bottom: 40px; display: grid; gap: 6px; text-align: right; padding: 10px 14px; border-radius: 12px; background: rgba(6, 9, 16, 0.42); border: 1px solid var(--stroke); backdrop-filter: blur(8px); }
-.hud__coord { display: grid; grid-template-columns: auto auto; gap: 12px; justify-content: end; align-items: baseline; }
-.hud__coord b { font: 650 16px/1 var(--mono); color: #ffffff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
-.hud__k { font: 600 9.5px/1 var(--mono); letter-spacing: 0.16em; color: var(--muted); }
+.hud__readout { position: absolute; right: 20px; bottom: 40px; display: grid; gap: 3px; text-align: right; padding: 6px 10px; border-radius: 10px; background: rgba(6, 9, 16, 0.42); border: 1px solid var(--stroke); backdrop-filter: blur(8px); }
+.hud__coord { display: grid; grid-template-columns: auto auto; gap: 8px; justify-content: end; align-items: baseline; }
+.hud__coord b { font: 650 12.5px/1 var(--mono); color: #ffffff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+.hud__k { font: 600 8.5px/1 var(--mono); letter-spacing: 0.14em; color: var(--muted); }
 
 /* Scan FX — intro reveal + transition wipe */
 .fx { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; }
@@ -299,7 +298,7 @@ body.gallery-collapsed .fx__title { left: 40px; }
 .fx__loc { margin-top: 10px; font: 600 15px/1 var(--mono); letter-spacing: 0.06em; color: #dce7f6; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72); }
 
 /* Globe inset */
-.corner-stack { position: fixed; top: 20px; right: 20px; z-index: 33; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; pointer-events: none; }
+.corner-stack { position: fixed; top: 20px; right: 20px; z-index: 33; width: 216px; display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; }
 .globe { pointer-events: none; text-align: center; }
 
 /* Live weather panel (sits directly below the globe inset) */

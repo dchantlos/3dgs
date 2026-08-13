@@ -32,6 +32,8 @@ const fx = initFx();
 initHud(view);
 const minimap = initMinimap();
 const weather = initWeather(view);
+// Stack the tools dock beneath the weather panel in the top-right corner.
+document.getElementById("cornerStack")?.appendChild(document.getElementById("toolsDock"));
 
 view.when(async () => {
   setBoot("Loading reality mapping…");
