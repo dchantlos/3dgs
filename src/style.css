@@ -95,21 +95,6 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .brand__sub { align-self: flex-start; font-size: 11px; color: #b6c3d6; letter-spacing: 0.02em; text-decoration: none; transition: color 0.18s; }
 .brand__sub:hover { color: var(--accent); text-decoration: underline; }
 
-/* Powered by Esri badge — bottom-left glass pill (construction-timelapse style, no logo). */
-.esri-badge {
-  position: fixed; bottom: 20px; left: 20px; z-index: 40;
-  display: flex; align-items: center;
-  padding: 8px 14px; border-radius: 12px;
-  background: var(--panel); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
-  border: 1px solid var(--stroke); box-shadow: var(--shadow);
-  color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-  text-decoration: none; transition: all 0.2s ease;
-}
-.esri-badge:hover {
-  color: var(--text); border-color: var(--accent);
-  box-shadow: var(--shadow), 0 0 18px -6px var(--accent);
-  transform: translateY(-1px);
-}
 
 /* ---------------- Generic glass panel ---------------- */
 .panel {
@@ -282,8 +267,8 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
 .hud__reticle span { position: absolute; background: rgba(var(--accent-rgb), 0.6); }
 .hud__reticle span:nth-child(1) { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
 .hud__reticle span:nth-child(2) { top: 50%; left: 0; height: 1px; width: 100%; transform: translateY(-50%); }
-.hud__readout { position: absolute; right: 20px; bottom: 40px; display: grid; gap: 3px; text-align: right; padding: 6px 10px; border-radius: 10px; background: rgba(6, 9, 16, 0.42); border: 1px solid var(--stroke); backdrop-filter: blur(8px); }
-.hud__coord { display: grid; grid-template-columns: auto auto; gap: 8px; justify-content: end; align-items: baseline; }
+.hud__readout { position: absolute; left: 20px; bottom: 20px; display: grid; gap: 3px; text-align: left; padding: 6px 10px; border-radius: 10px; background: rgba(6, 9, 16, 0.42); border: 1px solid var(--stroke); backdrop-filter: blur(8px); }
+.hud__coord { display: grid; grid-template-columns: auto auto; gap: 8px; justify-content: start; align-items: baseline; }
 .hud__coord b { font: 650 12.5px/1 var(--mono); color: #ffffff; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
 .hud__k { font: 600 8.5px/1 var(--mono); letter-spacing: 0.14em; color: var(--muted); }
 
@@ -300,6 +285,7 @@ body.gallery-collapsed .fx__title { left: 40px; }
 /* Globe inset */
 .corner-stack { position: fixed; top: 20px; right: 20px; z-index: 33; width: 216px; display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; }
 .globe { pointer-events: none; text-align: center; }
+.globe-corner { position: fixed; bottom: 20px; right: 20px; z-index: 33; width: 216px; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
 
 /* Live weather panel (sits directly below the globe inset) */
 .wx {
