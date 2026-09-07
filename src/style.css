@@ -290,6 +290,9 @@ body.gallery-collapsed #galleryCollapse { left: 16px; }
     border-color: rgba(63, 224, 208, 0.5);
   }
   #galleryCollapse:hover { color: var(--accent); }
+
+  /* Flight mode is desktop-only (keyboard + mouse) */
+  #flyBtn, .dock__sep--fly { display: none; }
 }
 
 /* ============================================================
@@ -376,3 +379,102 @@ body.gallery-collapsed .fx__title { left: 40px; }
 @media (pointer: coarse) { .hud__readout, .hud__reticle { display: none; } }
 @media (max-width: 860px) { .corner-stack { top: unset; bottom: 150px; right: 16px; } .wx { display: none; } .fx__title { display: none; } }
 @media (prefers-reduced-motion: reduce) { .hud__grain, .hud__dot { animation: none; } }
+
+/* ============================================================
+   Flight mode — manual first-person camera (desktop only)
+   ============================================================ */
+.flighthud { position: fixed; inset: 0; z-index: 34; pointer-events: none; display: none; }
+body.flight-active .flighthud { display: block; }
+body.flight-active .hud { display: none; }
+
+.flighthud__bar {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  pointer-events: auto; display: flex; align-items: center; gap: 14px;
+  padding: 8px 12px; background: var(--panel); backdrop-filter: var(--glass);
+  border: 1px solid var(--stroke); border-radius: 14px; box-shadow: var(--shadow);
+}
+.flighthud__badge { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font: 700 12px/1 var(--font); letter-spacing: 0.12em; }
+.flighthud__badgeico { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.flighthud__stat { display: inline-flex; align-items: baseline; gap: 5px; }
+.flighthud__stat i { font: 600 8.5px/1 var(--mono); font-style: normal; letter-spacing: 0.14em; color: var(--muted); }
+.flighthud__stat b { font: 650 13px/1 var(--mono); color: #fff; min-width: 34px; text-align: right; }
+.flighthud__stat u { font: 500 9px/1 var(--mono); text-decoration: none; color: var(--faint); }
+.flighthud__view {
+  pointer-events: auto; padding: 5px 9px; cursor: pointer;
+  font: 700 11px var(--mono); letter-spacing: 0.06em; color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.14); border: 1px solid rgba(var(--accent-rgb), 0.4); border-radius: 9px;
+}
+.flighthud__view:hover { background: rgba(var(--accent-rgb), 0.24); }
+.flighthud__exit {
+  pointer-events: auto; margin-left: 2px; padding: 5px 9px; cursor: pointer;
+  font: 600 11px var(--font); color: var(--muted);
+  background: transparent; border: 1px solid var(--stroke-2); border-radius: 9px;
+}
+.flighthud__exit:hover { color: var(--text); border-color: var(--accent); }
+
+.flighthud__keys {
+  position: absolute; top: 62px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 16px; padding: 6px 12px; white-space: nowrap;
+  background: rgba(6, 9, 16, 0.5); border: 1px solid var(--stroke); border-radius: 10px;
+  backdrop-filter: blur(8px); font: 500 11px var(--font); color: var(--muted);
+}
+.flighthud__keys kbd {
+  font: 600 10px var(--mono); color: var(--text);
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--stroke-2);
+  border-radius: 5px; padding: 1px 5px; margin: 0 1px;
+}
+
+.flighthud__reticle { position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); opacity: 0.55; }
+.flighthud__reticle::before, .flighthud__reticle::after { content: ""; position: absolute; background: rgba(var(--accent-rgb), 0.8); }
+.flighthud__reticle::before { left: 50%; top: 0; width: 1.5px; height: 100%; transform: translateX(-50%); }
+.flighthud__reticle::after { top: 50%; left: 0; height: 1.5px; width: 100%; transform: translateY(-50%); }
+
+.flighthud__lock {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 42px));
+  display: none; padding: 9px 15px; color: var(--text); font: 600 12.5px var(--font);
+  background: rgba(6, 9, 16, 0.72); border: 1px solid var(--stroke-2); border-radius: 12px; backdrop-filter: blur(10px);
+}
+.flighthud__lock kbd { font: 600 11px var(--mono); background: rgba(255, 255, 255, 0.08); border: 1px solid var(--stroke-2); border-radius: 5px; padding: 1px 5px; }
+.flighthud.is-unlocked .flighthud__lock { display: block; }
+
+.flighthud__info {
+  pointer-events: auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0; cursor: pointer; color: var(--muted);
+  background: transparent; border: 1px solid var(--stroke-2); border-radius: 8px;
+}
+.flighthud__info svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.flighthud__info:hover { color: var(--text); border-color: var(--accent); }
+
+/* Info & sources modal (opened from the flight bar) */
+.flightinfo { position: fixed; inset: 0; z-index: 60; display: none; }
+.flightinfo.is-open { display: block; }
+.flightinfo__backdrop { position: absolute; inset: 0; background: rgba(3, 6, 12, 0.55); backdrop-filter: blur(2px); }
+.flightinfo__panel {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 40px)); max-height: min(80vh, 640px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--panel-2); backdrop-filter: var(--glass);
+  border: 1px solid var(--stroke-2); border-radius: var(--radius); box-shadow: var(--shadow);
+  animation: slideIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.flightinfo__head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--stroke); }
+.flightinfo__head strong { font: 700 15px var(--font); color: var(--text); letter-spacing: 0.01em; }
+.flightinfo__close { border: none; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+.flightinfo__close:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+.flightinfo__body { padding: 14px 16px 16px; overflow-y: auto; }
+.flightinfo__body h4 { margin: 0 0 8px; font: 600 10.5px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.flightinfo__body h4:not(:first-child) { margin-top: 18px; }
+.flightinfo__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.flightinfo__list li { font: 400 12.5px/1.5 var(--font); color: var(--muted); }
+.flightinfo__list b { color: var(--text); font-weight: 600; }
+.flightinfo__list a { color: var(--accent); text-decoration: none; }
+.flightinfo__list a:hover { text-decoration: underline; }
+.flightinfo__list kbd { font: 600 10px var(--mono); color: var(--text); background: rgba(255, 255, 255, 0.08); border: 1px solid var(--stroke-2); border-radius: 5px; padding: 1px 5px; margin: 0 1px; }
+.flightinfo__note { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--stroke); font: italic 500 11.5px var(--font); color: var(--faint); }
+.flightinfo__foot { display: flex; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--stroke); }
+.flightinfo__start {
+  cursor: pointer; padding: 9px 18px; font: 700 13px var(--font);
+  color: #04121a; background: var(--accent); border: 1px solid var(--accent); border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.35); transition: filter 0.16s;
+}
+.flightinfo__start:hover { filter: brightness(1.08); }

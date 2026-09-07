@@ -99,6 +99,9 @@
 
     <!-- Tools dock -->
     <nav id="toolsDock" class="dock" aria-label="Reality inspection tools">
+      <button id="flyBtn" class="dock__btn dock__btn--fly" type="button" title="Drone mode — free-fly the capture (desktop)">
+        <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M7.7 7.7l2.6 2.6M16.3 7.7l-2.6 2.6M7.7 16.3l2.6-2.6M16.3 16.3l-2.6-2.6"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"/></svg><em>Drone</em></button>
+      <span class="dock__sep dock__sep--fly"></span>
       <button class="dock__btn" data-tool="slice" title="Cut a movable plane through the capture">
         <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M2 13h20"/></svg><em>Slice</em></button>
       <button class="dock__btn" data-tool="los" title="Test visibility between an observer and a target">

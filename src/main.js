@@ -17,6 +17,7 @@ import { initHud } from "./hud.js";
 import { initFx } from "./fx.js";
 import { initMinimap } from "./minimap.js";
 import { initWeather } from "./weather.js";
+import { initFlight } from "./flight.js";
 
 let currentCapture = null;
 let selecting = false;
@@ -30,6 +31,7 @@ const fx = initFx();
 initHud(view);
 const minimap = initMinimap();
 const weather = initWeather(view);
+const flight = initFlight(view, { onEnter: stopTour });
 // Stack the tools dock beneath the weather panel in the top-right corner.
 document.getElementById("cornerStack")?.appendChild(document.getElementById("toolsDock"));
 
@@ -45,6 +47,7 @@ async function selectCapture(capture, { fromTour = false, intro = false } = {}) 
   selecting = true;
   try {
     closeWidget();
+    flight?.exit();
     if (!fromTour) stopTour();
 
     currentCapture = capture;
@@ -69,6 +72,7 @@ async function selectCapture(capture, { fromTour = false, intro = false } = {}) 
 // Reset re-frames the active capture rather than flying out to the globe.
 function onReset() {
   stopTour();
+  flight?.exit();
   closeWidget();
   if (currentCapture) flyTo(currentCapture);
 }
