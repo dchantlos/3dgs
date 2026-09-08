@@ -410,7 +410,7 @@ function buildUi() {
       <span class="flighthud__stat"><i>ALT</i><b id="flAlt">0</b><u>m</u></span>
       <span class="flighthud__stat"><i>HDG</i><b id="flHdg">0</b><u>°</u></span>
       <button class="flighthud__view" type="button" title="Toggle 1st / 3rd person (V)">3rd</button>
-      <button class="flighthud__info" type="button" title="Info &amp; sources" aria-label="Info and sources"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg></button>
+      <button class="flighthud__info" type="button" title="Drone controls" aria-label="Drone controls"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg></button>
       <button class="flighthud__exit" type="button">Exit ✕</button>
     </div>
     <div class="flighthud__keys">
@@ -449,7 +449,7 @@ function buildInfo() {
   info = el("div", "flightinfo");
   info.setAttribute("role", "dialog");
   info.setAttribute("aria-modal", "true");
-  info.setAttribute("aria-label", "Drone mode info and sources");
+  info.setAttribute("aria-label", "Drone mode controls");
   info.innerHTML = `
     <div class="flightinfo__backdrop"></div>
     <div class="flightinfo__panel">
@@ -467,13 +467,6 @@ function buildInfo() {
           <li><b>Turn / pitch:</b> <kbd>Q</kbd><kbd>E</kbd> or <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn; <kbd>&uarr;</kbd><kbd>&darr;</kbd> look up and down.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
           <li><b>Exit:</b> <kbd>Esc</kbd> frees the cursor; press it again or use <b>Exit</b> to exit drone mode.</li>
-        </ul>
-        <h4>Data &amp; services</h4>
-        <ul class="flightinfo__list">
-          <li><b>Software:</b> <a href="https://developers.arcgis.com/javascript/latest/" target="_blank" rel="noopener noreferrer">ArcGIS Maps SDK for JavaScript</a>, under the <a href="https://developers.arcgis.com/javascript/latest/licensing/" target="_blank" rel="noopener noreferrer">Esri licensing and attribution terms</a>.</li>
-          <li><b>Reality captures:</b> Gaussian splat scenes from the public <a href="https://www.arcgis.com/home/item.html?id=646ad56647544762b1919508158ba619" target="_blank" rel="noopener noreferrer">Gaussian Splat Examples</a> web scene, processed with <a href="https://www.esri.com/en-us/arcgis/products/arcgis-reality/overview" target="_blank" rel="noopener noreferrer">ArcGIS Reality</a>. Each capture&rsquo;s provider is credited on its gallery card and in the scene attribution.</li>
-          <li><b><a href="https://livingatlas.arcgis.com/en/browse/" target="_blank" rel="noopener noreferrer">Esri Living Atlas</a>:</b> basemap <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noopener noreferrer">World Imagery</a> and <a href="https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4" target="_blank" rel="noopener noreferrer">Terrain 3D</a> elevation. Live provider credits are shown by ArcGIS in the scene attribution.</li>
-          <li><b>Weather:</b> real-time conditions from <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.</li>
         </ul>
         <p class="flightinfo__note">For visual exploration only. Not for navigation.</p>
       </div>
@@ -494,7 +487,7 @@ function openInfo(preflight = false) {
   infoOpen = true;
   keys.clear();
   if (document.pointerLockElement) document.exitPointerLock();
-  info.querySelector(".flightinfo__title").textContent = preflight ? "Drone mode" : "Info & sources";
+  info.querySelector(".flightinfo__title").textContent = preflight ? "Drone mode (Experimental)" : "Drone controls";
   info.querySelector(".flightinfo__start").textContent = preflight ? "Start drone mode" : "Resume";
   info.classList.add("is-open");
 }

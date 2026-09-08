@@ -18,6 +18,7 @@ import { initFx } from "./fx.js";
 import { initMinimap } from "./minimap.js";
 import { initWeather } from "./weather.js";
 import { initFlight } from "./flight.js";
+import { initAbout } from "./about.js";
 
 let currentCapture = null;
 let selecting = false;
@@ -32,6 +33,7 @@ initHud(view);
 const minimap = initMinimap();
 const weather = initWeather(view);
 const flight = initFlight(view, { onEnter: stopTour });
+initAbout();
 // Stack the tools dock beneath the weather panel in the top-right corner.
 document.getElementById("cornerStack")?.appendChild(document.getElementById("toolsDock"));
 
