@@ -156,6 +156,19 @@ export const CAPTURES = [
     thumb: THUMB("d271ecae011d4fc29bb5dab1b55884a9", "thumbnail/thumbnail1761317970736.png"),
     blurb: "Reality capture of a working industrial facility with dense structural detail.",
     camera: { x: 12111329.11759361, y: 1733253.575329276, z: 171.7313, heading: 9.232, tilt: 63.813 }
+  },
+  {
+    id: "minato-mirai",
+    title: "Minato Mirai",
+    provider: "Kokusai Kogyo Co., Ltd.",
+    location: "Yokohama",
+    country: "Japan",
+    category: "City",
+    itemId: "bac95f9ce758456b8b920cd727c1dbfc",
+    url: "https://tiles.arcgis.com/tiles/w304fwRQsdiqgonj/arcgis/rest/services/kkc_mm_gaussian_splat/3DTilesServer/tileset.json",
+    thumb: THUMB("bac95f9ce758456b8b920cd727c1dbfc", "thumbnail/_7B2FA9E29E-3A13-46B5-A467-DA379828D6C6_7D.png"),
+    blurb: "Airborne reality capture of Yokohama's Minato Mirai waterfront, flown with a Leica CityMapper2 at 3 cm resolution (September 2024).",
+    camera: { x: 15544594.123, y: 4224532.623, z: 791.155, heading: 330, tilt: 62 }
   }
 ];
 
@@ -169,7 +182,7 @@ export const TOUR_DWELL_MS = 5200;   // pause at each tour stop
 // Extra scene settings mirrored from the source web scene so splats sit correctly.
 // Per-capture absolute-height offsets (m) so georeferenced splats don't sink into the terrain.
 export const ELEVATION_OFFSETS = {
-  phoenix: 1, denver: 3, roaster: 1, alcatraz: 16, "building-2019": 2, cathedral: 0.5, stuttgart: 1
+  phoenix: 1, denver: 3, roaster: 1, alcatraz: 16, "building-2019": 2, cathedral: 0.5, stuttgart: 1, "minato-mirai": 38
 };
 // Pre-construction terrain used only by the Building E 2019 capture.
 export const BUILDING_E_TERRAIN_URL = "https://tiles.arcgis.com/tiles/uujCiiEZAflDbdxE/arcgis/rest/services/20190919_EsriBuildingE_Elevation/ImageServer";
