@@ -4,45 +4,50 @@
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import Graphic from "@arcgis/core/Graphic.js";
 import Point from "@arcgis/core/geometry/Point.js";
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D.js";
+import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer.js";
 
 const BASE = import.meta.env.BASE_URL;
 const MODEL_URL = `${BASE}drone.glb`;
 
 // Tunables ---------------------------------------------------------------
 const DRONE_W_M = 1.4;       // rendered drone width in metres
-let HEADING_OFFSET = 270;    // TEMP calibration — press [ / ] in drone mode to aim the sensor forward
+const HEADING_OFFSET = 180;  // aligns the model's sensor with the flight direction in third person
 // -----------------------------------------------------------------------
-
-function objectSymbol(href, widthM) {
-  return {
-    type: "point-3d",
-    symbolLayers: [{
-      type: "object",
-      resource: { href },
-      width: widthM,
-      anchor: "origin",
-      heading: 0
-    }]
-  };
-}
 
 export function initDrone(view) {
   const layer = new GraphicsLayer({ elevationInfo: { mode: "absolute-height" }, visible: false });
   view.map.add(layer);
 
-  const model = new Graphic({ symbol: objectSymbol(MODEL_URL, DRONE_W_M) });
+  // Pre-build the symbol once. Re-orienting is done by cloning this pristine symbol and reassigning
+  // model.symbol — the only thing that makes the SceneView repaint the glTF's heading (an in-place
+  // layer.heading change never repaints, so the drone would freeze at its last-drawn heading).
+  // Cloning the ORIGINAL reuses the cached model resource, so it doesn't reload the 3.6 MB glTF —
+  // the same approach the Sky Tour plane uses to rotate its model.
+  const baseSymbol = new PointSymbol3D({
+    symbolLayers: [new ObjectSymbol3DLayer({ resource: { href: MODEL_URL }, width: DRONE_W_M, anchor: "origin", heading: 0 })]
+  });
+
+  const model = new Graphic({ symbol: baseSymbol.clone() });
   layer.add(model);
 
   const pt = (x, y, z) => new Point({ x, y, z, spatialReference: { wkid: 102100 } });
 
+  let lastOrient = "";
   function setPose(s, lean) {
     model.geometry = pt(s.x, s.y, s.z);
-    // Mutate the object layer in place — reassigning the whole glTF symbol each frame
-    // makes the SDK reprocess the model resource and leaks GPU memory fast.
-    const layer = model.symbol.symbolLayers.getItemAt(0);
-    layer.heading = s.heading + HEADING_OFFSET;
-    layer.tilt = lean?.pitch || 0;   // nose-down when moving forward
-    layer.roll = lean?.roll || 0;    // bank into strafe / turn
+    const heading = s.heading + HEADING_OFFSET;
+    const tilt = lean?.pitch || 0;   // nose-down when moving forward
+    const roll = lean?.roll || 0;    // bank into strafe / turn
+    const orient = `${Math.round(heading)} ${Math.round(tilt)} ${Math.round(roll)}`;
+    if (orient === lastOrient) return; // reassign the symbol only when the orientation actually changes
+    lastOrient = orient;
+    const sym = baseSymbol.clone();
+    const objLayer = sym.symbolLayers.getItemAt(0);
+    objLayer.heading = heading;
+    objLayer.tilt = tilt;
+    objLayer.roll = roll;
+    model.symbol = sym;
   }
 
   return {
@@ -50,8 +55,6 @@ export function initDrone(view) {
     show() { layer.visible = true; },
     hide() { layer.visible = false; },
     isDroneGraphic: (g) => g === model,
-    getHeadingOffset: () => HEADING_OFFSET,
-    bumpHeadingOffset(delta) { HEADING_OFFSET = (HEADING_OFFSET + delta + 360) % 360; return HEADING_OFFSET; },
     destroy() { view.map.remove(layer); }
   };
 }

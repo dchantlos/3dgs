@@ -19,8 +19,8 @@ const CHASE_UP = 7;      // metres above the drone
 const RENDER_TAU = 0.06; // smoothing (s) for the shared drone+camera render pose
 const MAX_LEAN = 24;         // max degrees the drone tips toward its control input
 const LEAN_TAU = 0.14;       // how quickly the drone tips in / levels out (seconds)
-const LEAN_PITCH_SIGN = -1;  // forward motion pitches the nose down
-const LEAN_ROLL_SIGN = 1;    // strafing / turning banks the drone
+const LEAN_PITCH_SIGN = 1;   // forward motion pitches the nose down
+const LEAN_ROLL_SIGN = -1;   // strafing / turning banks the drone
 const KEYS = new Set(["w", "a", "s", "d", "q", "e", "i", "k", "arrowup", "arrowdown", "arrowleft", "arrowright"]);
 
 let cb = {};
@@ -152,10 +152,10 @@ function step(dt) {
 
   const fwd = (keys.has("w") ? 1 : 0) - (keys.has("s") ? 1 : 0);
   const strafe = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0);
-  const lift = (keys.has("i") ? 1 : 0) - (keys.has("k") ? 1 : 0);
+  const lift = (keys.has("arrowup") ? 1 : 0) - (keys.has("arrowdown") ? 1 : 0);
   let ix, iy, iz;
   if (thirdPerson) {
-    // Drone chase view: forward/strafe stay horizontal; I/K change altitude.
+    // Drone chase view: forward/strafe stay horizontal; the up/down arrows change altitude.
     ix = sinH * fwd + cosH * strafe;
     iy = cosH * fwd - sinH * strafe;
     iz = lift;
@@ -184,7 +184,7 @@ function step(dt) {
   const yaw = ((keys.has("e") || keys.has("arrowright")) ? 1 : 0) -
               ((keys.has("q") || keys.has("arrowleft")) ? 1 : 0);
   if (yaw) st.heading = (st.heading + yaw * YAW_RATE * dt + 360) % 360;
-  const pitchK = (keys.has("arrowup") ? 1 : 0) - (keys.has("arrowdown") ? 1 : 0);
+  const pitchK = (keys.has("i") ? 1 : 0) - (keys.has("k") ? 1 : 0);
   if (pitchK) st.tilt = clamp(st.tilt + pitchK * PITCH_RATE * dt, 1, 179);
 
   // Web Mercator stretches horizontal distance by 1/cos(lat); scale so the felt
@@ -341,13 +341,6 @@ function onKeyDown(e) {
   if (infoOpen) return; // the panel is open; ignore flight keys
   const k = e.key.toLowerCase();
   if (k === "v") { toggleView(); return; } // 1st ⇄ 3rd person
-  if (import.meta.env.DEV && (k === "[" || k === "]")) { // DEV-only: dial the drone facing until the sensor points forward
-    const v = drone.bumpHeadingOffset(k === "]" ? 15 : -15);
-    const cal = ui && ui.querySelector(".flighthud__cal");
-    if (cal) cal.textContent = `facing offset ${v}° — press [ / ] to aim the sensor forward`;
-    console.log("[drone] HEADING_OFFSET =", v);
-    return;
-  }
   if (KEYS.has(k)) { e.preventDefault(); keys.add(k); }
 }
 
@@ -415,20 +408,15 @@ function buildUi() {
     </div>
     <div class="flighthud__keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
-      <span><kbd>I</kbd> / <kbd>K</kbd> up · down</span>
+      <span><kbd>&uarr;</kbd> / <kbd>&darr;</kbd> up · down</span>
       <span><kbd>Q</kbd><kbd>E</kbd> turn · scroll speed</span>
       <span><kbd>V</kbd> / click drone: 1st ⇄ 3rd</span>
     </div>
-    ${import.meta.env.DEV ? '<div class="flighthud__cal" style="text-align:center;font-size:12px;color:#7fe9ff;padding:4px 0 2px;letter-spacing:.02em;">facing offset 270° — press [ / ] to aim the sensor forward</div>' : ''}
     <div class="flighthud__lock"><span>Click to look around · <kbd>Esc</kbd> to exit</span></div>`;
   document.body.appendChild(ui);
   ui.querySelector(".flighthud__exit").addEventListener("click", exit);
   ui.querySelector(".flighthud__view").addEventListener("click", toggleView);
   ui.querySelector(".flighthud__info").addEventListener("click", () => openInfo(false));
-  if (import.meta.env.DEV) {
-    const cal = ui.querySelector(".flighthud__cal");
-    if (cal && drone) cal.textContent = `facing offset ${drone.getHeadingOffset()}° — press [ / ] to aim the sensor forward`;
-  }
 }
 
 function paintTelemetry(force) {
@@ -463,8 +451,8 @@ function buildInfo() {
           <li><b>Move:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly forward, left, back and right.</li>
           <li><b>View:</b> starts in first person (cockpit) &mdash; press <kbd>V</kbd> to switch to third person and back.</li>
           <li><b>Look (first person):</b> move the mouse to aim &mdash; click the scene to capture the pointer.</li>
-          <li><b>Climb / descend:</b> <kbd>I</kbd> rises, <kbd>K</kbd> drops.</li>
-          <li><b>Turn / pitch:</b> <kbd>Q</kbd><kbd>E</kbd> or <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn; <kbd>&uarr;</kbd><kbd>&darr;</kbd> look up and down.</li>
+          <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> rises, <kbd>&darr;</kbd> drops.</li>
+          <li><b>Turn / pitch:</b> <kbd>Q</kbd><kbd>E</kbd> or <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn; <kbd>I</kbd><kbd>K</kbd> look up and down.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
           <li><b>Exit:</b> <kbd>Esc</kbd> frees the cursor; press it again or use <b>Exit</b> to exit drone mode.</li>
         </ul>
