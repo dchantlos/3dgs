@@ -9,7 +9,6 @@ import { el, clamp, mercToLonLat } from "./util.js";
 const DEG = Math.PI / 180;
 const TAU = 0.32;        // velocity easing time constant — small coast, quick stop
 const YAW_RATE = 75;     // deg/sec for Q/E + arrow turning
-const PITCH_RATE = 60;   // deg/sec for arrow pitch
 const LOOK_SENS = 0.12;  // deg per pixel of mouse movement
 const CRUISE_DEFAULT = 28; // m/s starting speed
 const CRUISE_MIN = 10;
@@ -152,10 +151,10 @@ function step(dt) {
 
   const fwd = (keys.has("w") ? 1 : 0) - (keys.has("s") ? 1 : 0);
   const strafe = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0);
-  const lift = (keys.has("arrowup") ? 1 : 0) - (keys.has("arrowdown") ? 1 : 0);
+  const lift = ((keys.has("arrowup") || keys.has("i")) ? 1 : 0) - ((keys.has("arrowdown") || keys.has("k")) ? 1 : 0);
   let ix, iy, iz;
   if (thirdPerson) {
-    // Drone chase view: forward/strafe stay horizontal; the up/down arrows change altitude.
+    // Drone chase view: forward/strafe stay horizontal; the up/down arrows or I/K change altitude.
     ix = sinH * fwd + cosH * strafe;
     iy = cosH * fwd - sinH * strafe;
     iz = lift;
@@ -184,8 +183,6 @@ function step(dt) {
   const yaw = ((keys.has("e") || keys.has("arrowright")) ? 1 : 0) -
               ((keys.has("q") || keys.has("arrowleft")) ? 1 : 0);
   if (yaw) st.heading = (st.heading + yaw * YAW_RATE * dt + 360) % 360;
-  const pitchK = (keys.has("i") ? 1 : 0) - (keys.has("k") ? 1 : 0);
-  if (pitchK) st.tilt = clamp(st.tilt + pitchK * PITCH_RATE * dt, 1, 179);
 
   // Web Mercator stretches horizontal distance by 1/cos(lat); scale so the felt
   // speed is uniform. Altitude (z) is already true metres.
@@ -400,7 +397,6 @@ function buildUi() {
     <div class="flighthud__bar">
       <span class="flighthud__badge"><svg class="flighthud__badgeico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M7.7 7.7l2.6 2.6M16.3 7.7l-2.6 2.6M7.7 16.3l2.6-2.6M16.3 16.3l-2.6-2.6"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"/></svg>DRONE</span>
       <span class="flighthud__stat"><i>SPD</i><b id="flSpd">0</b><u>m/s</u></span>
-      <span class="flighthud__stat"><i>ALT</i><b id="flAlt">0</b><u>m</u></span>
       <span class="flighthud__stat"><i>HDG</i><b id="flHdg">0</b><u>°</u></span>
       <button class="flighthud__view" type="button" title="Toggle 1st / 3rd person (V)">3rd</button>
       <button class="flighthud__info" type="button" title="Drone controls" aria-label="Drone controls"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg></button>
@@ -409,7 +405,7 @@ function buildUi() {
     <div class="flighthud__keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
       <span><kbd>&uarr;</kbd> / <kbd>&darr;</kbd> up · down</span>
-      <span><kbd>Q</kbd><kbd>E</kbd> turn · scroll speed</span>
+      <span><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn · scroll speed</span>
       <span><kbd>V</kbd> / click drone: 1st ⇄ 3rd</span>
     </div>
     <div class="flighthud__lock"><span>Click to look around · <kbd>Esc</kbd> to exit</span></div>`;
@@ -424,10 +420,8 @@ function paintTelemetry(force) {
   if (!force && now - telT < 100) return; // ~10 Hz
   telT = now;
   const spd = ui.querySelector("#flSpd");
-  const alt = ui.querySelector("#flAlt");
   const hdg = ui.querySelector("#flHdg");
   if (spd) spd.textContent = Math.round(Math.hypot(vel.x, vel.y, vel.z));
-  if (alt) alt.textContent = Math.round(st.z).toLocaleString();
   if (hdg) hdg.textContent = Math.round(st.heading);
 }
 
@@ -451,8 +445,8 @@ function buildInfo() {
           <li><b>Move:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly forward, left, back and right.</li>
           <li><b>View:</b> starts in first person (cockpit) &mdash; press <kbd>V</kbd> to switch to third person and back.</li>
           <li><b>Look (first person):</b> move the mouse to aim &mdash; click the scene to capture the pointer.</li>
-          <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> rises, <kbd>&darr;</kbd> drops.</li>
-          <li><b>Turn / pitch:</b> <kbd>Q</kbd><kbd>E</kbd> or <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn; <kbd>I</kbd><kbd>K</kbd> look up and down.</li>
+          <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> rise and drop.</li>
+          <li><b>Turn:</b> <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn left and right.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
           <li><b>Exit:</b> <kbd>Esc</kbd> frees the cursor; press it again or use <b>Exit</b> to exit drone mode.</li>
         </ul>
