@@ -13,6 +13,7 @@ const MODEL_URL = `${BASE}drone.glb`;
 // Tunables ---------------------------------------------------------------
 const DRONE_W_M = 1.4;       // rendered drone width in metres
 const HEADING_OFFSET = 180;  // aligns the model's sensor with the flight direction in third person
+const ORIENT_MIN_MS = 45;    // min gap between orientation symbol-swaps (throttles the costly repaint on heavy scenes)
 // -----------------------------------------------------------------------
 
 export function initDrone(view) {
@@ -34,14 +35,20 @@ export function initDrone(view) {
   const pt = (x, y, z) => new Point({ x, y, z, spatialReference: { wkid: 102100 } });
 
   let lastOrient = "";
+  let lastSwap = 0;
   function setPose(s, lean) {
-    model.geometry = pt(s.x, s.y, s.z);
+    model.geometry = pt(s.x, s.y, s.z); // every frame: keep the drone locked under the chase camera
     const heading = s.heading + HEADING_OFFSET;
     const tilt = lean?.pitch || 0;   // nose-down when moving forward
     const roll = lean?.roll || 0;    // bank into strafe / turn
     const orient = `${Math.round(heading)} ${Math.round(tilt)} ${Math.round(roll)}`;
-    if (orient === lastOrient) return; // reassign the symbol only when the orientation actually changes
+    if (orient === lastOrient) return; // orientation unchanged (e.g. hover) — no swap needed
+    // The symbol swap re-renders the glTF and is the expensive bit; throttle it so a heavy splat
+    // scene isn't hit with a swap every frame while the drone turns and leans.
+    const now = performance.now();
+    if (now - lastSwap < ORIENT_MIN_MS) return;
     lastOrient = orient;
+    lastSwap = now;
     const sym = baseSymbol.clone();
     const objLayer = sym.symbolLayers.getItemAt(0);
     objLayer.heading = heading;

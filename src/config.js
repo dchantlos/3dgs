@@ -178,6 +178,8 @@ export const CATEGORIES = ["All", "City", "Landmark", "Industry", "Construction"
 export const SCENE_GLOW = 0.65;      // webscene/Glow intensity (0..1)
 export const FLY_MS = 3200;          // camera fly duration
 export const TOUR_DWELL_MS = 5200;   // pause at each tour stop
+export const SPLAT_MEMORY_CAP_MB = 4096; // ceiling for the SceneView resource-memory budget (keeps more splat detail resident)
+export const SPLAT_MOTION_PIXEL_RADIUS = 3.5; // min splat size (px) while the camera MOVES — higher = smoother motion on heavy scenes; idle/stationary detail is unchanged
 
 // Extra scene settings mirrored from the source web scene so splats sit correctly.
 // Per-capture absolute-height offsets (m) so georeferenced splats don't sink into the terrain.

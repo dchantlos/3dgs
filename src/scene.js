@@ -8,7 +8,7 @@ import Camera from "@arcgis/core/Camera.js";
 import Point from "@arcgis/core/geometry/Point.js";
 import Glow from "@arcgis/core/webscene/Glow.js";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils.js";
-import { SCENE_GLOW, FLY_MS, CAPTURES, ELEVATION_OFFSETS, BUILDING_E_TERRAIN_URL, ALCATRAZ_WATER_URL } from "./config.js";
+import { SCENE_GLOW, FLY_MS, CAPTURES, ELEVATION_OFFSETS, BUILDING_E_TERRAIN_URL, ALCATRAZ_WATER_URL, SPLAT_MEMORY_CAP_MB, SPLAT_MOTION_PIXEL_RADIUS } from "./config.js";
 
 let view;
 const splatCache = new Map(); // capture.id -> GaussianSplatLayer
@@ -44,8 +44,27 @@ export function bootScene() {
 
   // Enable the glow once the view's DOM is ready. (Adding UI components here crashes
   // DefaultUI3D in this build; the required Esri attribution renders on its own.)
-  view.when(() => enableGlow());
+  view.when(() => { enableGlow(); tunePerf(); });
   return view;
+}
+
+// Tune SceneView performance for the Gaussian splats (internal/undocumented API — only qualityProfile
+// is public, so everything here is guarded): (1) raise the resource-memory budget so more detail stays
+// resident, and (2) cull small splats WHILE THE CAMERA MOVES so heavy scenes stay smooth in motion
+// without touching idle/stationary detail. Device-scaled; values are only ever raised.
+function tunePerf() {
+  try {
+    const mb = Math.min(SPLAT_MEMORY_CAP_MB, Math.round((navigator.deviceMemory || 4) * 640));
+    const qs = view.qualitySettings;
+    if (qs && mb > (qs.memoryLimit || 0)) qs.memoryLimit = mb; // propagates to resourceController.memoryController.maxMemory
+    const mc = view.resourceController?.memoryController;
+    if (mc && mb > (mc.maxMemory || 0)) mc.maxMemory = mb;
+    const gs = qs?.gaussianSplat;
+    if (gs && SPLAT_MOTION_PIXEL_RADIUS > (gs.nonIdleMinimumSplatPixelRadius || 0)) {
+      gs.nonIdleMinimumSplatPixelRadius = SPLAT_MOTION_PIXEL_RADIUS;
+    }
+    if (import.meta.env.DEV) console.info(`[perf] splat memory ${mb} MB · motion splat radius ${gs?.nonIdleMinimumSplatPixelRadius}`);
+  } catch { /* internal shape varies across SDK versions */ }
 }
 
 function enableGlow() {
