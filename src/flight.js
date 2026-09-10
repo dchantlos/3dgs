@@ -313,7 +313,7 @@ function updateLockHint() {
   const span = ui?.querySelector(".flighthud__lock span");
   if (!span) return;
   span.innerHTML = identifyMode
-    ? `Identify: hold <kbd>left&nbsp;mouse</kbd> to look · <kbd>X</kbd> normal look · <kbd>Esc</kbd> exit`
+    ? `Identify: hold <kbd>left/right&nbsp;mouse</kbd> to look · <kbd>X</kbd> normal look · <kbd>Esc</kbd> exit`
     : `Click to look around · <kbd>X</kbd> identify mode · <kbd>Esc</kbd> to exit`;
 }
 
@@ -326,6 +326,7 @@ function addListeners() {
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mousedown", onMouseDown);
   document.addEventListener("mouseup", onMouseUp);
+  document.addEventListener("contextmenu", onContextMenu);
   document.addEventListener("pointerlockchange", onLockChange);
   const stop = (e) => e.stopPropagation();
   handles = [
@@ -345,6 +346,7 @@ function removeListeners() {
   document.removeEventListener("mousemove", onMouseMove);
   document.removeEventListener("mousedown", onMouseDown);
   document.removeEventListener("mouseup", onMouseUp);
+  document.removeEventListener("contextmenu", onContextMenu);
   document.removeEventListener("pointerlockchange", onLockChange);
   handles.forEach((h) => h.remove());
   handles = [];
@@ -377,15 +379,20 @@ function onMouseMove(e) {
 }
 
 // Identify mode (toggled with X): the pointer stays free so the user can click the scene,
-// and the view only turns while the left mouse button is held down.
+// and the view only turns while a mouse button (left or right) is held down.
 function onMouseDown(e) {
-  if (!active || infoOpen || thirdPerson || !identifyMode || e.button !== 0) return;
+  if (!active || infoOpen || thirdPerson || !identifyMode) return;
+  if (e.button !== 0 && e.button !== 2) return; // left or right drags the view
   identifyDrag = true;
 }
 
 function onMouseUp(e) {
-  if (e.button !== 0) return;
+  if (e.button !== 0 && e.button !== 2) return;
   identifyDrag = false;
+}
+
+function onContextMenu(e) {
+  if (active && !thirdPerson && identifyMode) e.preventDefault(); // let the right button drag the view
 }
 
 function toggleIdentify() {
@@ -487,7 +494,7 @@ function buildInfo() {
           <li><b>Move:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly forward, left, back and right.</li>
           <li><b>View:</b> starts in first person (cockpit) &mdash; press <kbd>V</kbd> to switch to third person and back.</li>
           <li><b>Look (first person):</b> move the mouse to aim &mdash; click the scene to capture the pointer.</li>
-          <li><b>Identify mode:</b> press <kbd>X</kbd> to free the cursor, then hold the <b>left mouse button</b> to look &mdash; so you can click around the scene.</li>
+          <li><b>Identify mode:</b> press <kbd>X</kbd> to free the cursor, then hold the <b>left or right mouse button</b> to look &mdash; so you can click around the scene.</li>
           <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> rise and drop.</li>
           <li><b>Turn:</b> <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn left and right.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
