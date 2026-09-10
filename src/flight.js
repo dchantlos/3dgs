@@ -31,6 +31,8 @@ let drone = null;
 
 let active = false;
 let locked = false;
+let identifyMode = false; // X toggles: view only turns while the left mouse button is held (frees the cursor to click)
+let identifyDrag = false; // left mouse button currently held in identify mode
 let infoOpen = false;
 let pendingStart = false;
 let thirdPerson = true;
@@ -105,11 +107,14 @@ function enter() {
   render.ready = false;
 
   active = true;
+  identifyMode = false;              // start in the normal always-on look; X toggles hold-left-to-look
+  identifyDrag = false;
   thirdPerson = false;               // default to the first-person cockpit view
   document.body.classList.add("flight-active");
   flyBtn.classList.add("is-on");
   drone.hide();                      // no chase model in first person
   updateViewBtn();
+  updateLockHint();
   addListeners();
   // Already sitting at the drone's eye — cut straight in, run the sim, grab the pointer.
   view.camera = makeCamera(st);
@@ -304,6 +309,14 @@ function updateViewBtn() {
   if (b) b.textContent = thirdPerson ? "3rd" : "1st";
 }
 
+function updateLockHint() {
+  const span = ui?.querySelector(".flighthud__lock span");
+  if (!span) return;
+  span.innerHTML = identifyMode
+    ? `Identify: hold <kbd>left&nbsp;mouse</kbd> to look · <kbd>X</kbd> normal look · <kbd>Esc</kbd> exit`
+    : `Click to look around · <kbd>X</kbd> identify mode · <kbd>Esc</kbd> to exit`;
+}
+
 /* ---------- input ---------- */
 
 function addListeners() {
@@ -311,6 +324,8 @@ function addListeners() {
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("wheel", onWheel, { passive: false });
   document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mousedown", onMouseDown);
+  document.addEventListener("mouseup", onMouseUp);
   document.addEventListener("pointerlockchange", onLockChange);
   const stop = (e) => e.stopPropagation();
   handles = [
@@ -328,6 +343,8 @@ function removeListeners() {
   window.removeEventListener("keyup", onKeyUp);
   window.removeEventListener("wheel", onWheel);
   document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mousedown", onMouseDown);
+  document.removeEventListener("mouseup", onMouseUp);
   document.removeEventListener("pointerlockchange", onLockChange);
   handles.forEach((h) => h.remove());
   handles = [];
@@ -337,7 +354,8 @@ function removeListeners() {
 function onKeyDown(e) {
   if (infoOpen) return; // the panel is open; ignore flight keys
   const k = e.key.toLowerCase();
-  if (k === "v") { toggleView(); return; } // 1st ⇄ 3rd person
+  if (k === "v") { identifyMode = false; identifyDrag = false; updateLockHint(); toggleView(); return; } // 1st ⇄ 3rd person
+  if (k === "x") { toggleIdentify(); return; } // hold-left-to-look ⇄ normal look
   if (KEYS.has(k)) { e.preventDefault(); keys.add(k); }
 }
 
@@ -353,9 +371,33 @@ function onKeyUp(e) {
 }
 
 function onMouseMove(e) {
-  if (!locked) return;
+  if (!locked && !identifyDrag) return;
   st.heading = (st.heading + e.movementX * LOOK_SENS + 360) % 360;
   st.tilt = clamp(st.tilt - e.movementY * LOOK_SENS, 1, 179);
+}
+
+// Identify mode (toggled with X): the pointer stays free so the user can click the scene,
+// and the view only turns while the left mouse button is held down.
+function onMouseDown(e) {
+  if (!active || infoOpen || thirdPerson || !identifyMode || e.button !== 0) return;
+  identifyDrag = true;
+}
+
+function onMouseUp(e) {
+  if (e.button !== 0) return;
+  identifyDrag = false;
+}
+
+function toggleIdentify() {
+  if (!active || thirdPerson) return;
+  identifyMode = !identifyMode;
+  identifyDrag = false;
+  if (identifyMode) {
+    if (document.pointerLockElement) document.exitPointerLock(); // free the cursor to click
+  } else {
+    requestLock(); // back to the normal always-on look
+  }
+  updateLockHint();
 }
 
 function onWheel(e) {
@@ -384,7 +426,7 @@ function onSceneClick(e) {
     view.hitTest(e).then((r) => {
       if (r.results.some((x) => drone.isDroneGraphic(x.graphic))) setView(false);
     }).catch(() => {});
-  } else if (!locked) {
+  } else if (!identifyMode && !locked) {
     requestLock();
   }
 }
@@ -408,7 +450,7 @@ function buildUi() {
       <span><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn · scroll speed</span>
       <span><kbd>V</kbd> / click drone: 1st ⇄ 3rd</span>
     </div>
-    <div class="flighthud__lock"><span>Click to look around · <kbd>Esc</kbd> to exit</span></div>`;
+    <div class="flighthud__lock"><span>Click to look around · <kbd>X</kbd> identify mode · <kbd>Esc</kbd> to exit</span></div>`;
   document.body.appendChild(ui);
   ui.querySelector(".flighthud__exit").addEventListener("click", exit);
   ui.querySelector(".flighthud__view").addEventListener("click", toggleView);
@@ -445,6 +487,7 @@ function buildInfo() {
           <li><b>Move:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly forward, left, back and right.</li>
           <li><b>View:</b> starts in first person (cockpit) &mdash; press <kbd>V</kbd> to switch to third person and back.</li>
           <li><b>Look (first person):</b> move the mouse to aim &mdash; click the scene to capture the pointer.</li>
+          <li><b>Identify mode:</b> press <kbd>X</kbd> to free the cursor, then hold the <b>left mouse button</b> to look &mdash; so you can click around the scene.</li>
           <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> rise and drop.</li>
           <li><b>Turn:</b> <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn left and right.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
