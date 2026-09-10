@@ -9,7 +9,6 @@ import { el, clamp, mercToLonLat } from "./util.js";
 const DEG = Math.PI / 180;
 const TAU = 0.32;        // velocity easing time constant — small coast, quick stop
 const YAW_RATE = 75;     // deg/sec for Q/E + arrow turning
-const PITCH_RATE = 60;   // deg/sec for arrow pitch
 const LOOK_SENS = 0.12;  // deg per pixel of mouse movement
 const CRUISE_DEFAULT = 28; // m/s starting speed
 const CRUISE_MIN = 10;
@@ -19,8 +18,8 @@ const CHASE_UP = 7;      // metres above the drone
 const RENDER_TAU = 0.06; // smoothing (s) for the shared drone+camera render pose
 const MAX_LEAN = 24;         // max degrees the drone tips toward its control input
 const LEAN_TAU = 0.14;       // how quickly the drone tips in / levels out (seconds)
-const LEAN_PITCH_SIGN = -1;  // forward motion pitches the nose down
-const LEAN_ROLL_SIGN = 1;    // strafing / turning banks the drone
+const LEAN_PITCH_SIGN = 1;   // forward motion pitches the nose down
+const LEAN_ROLL_SIGN = -1;   // strafing / turning banks the drone
 const KEYS = new Set(["w", "a", "s", "d", "q", "e", "i", "k", "arrowup", "arrowdown", "arrowleft", "arrowright"]);
 
 let cb = {};
@@ -32,8 +31,6 @@ let drone = null;
 
 let active = false;
 let locked = false;
-let lookHeld = false;   // right mouse button held → mouse-look is engaged
-let freeLook = false;   // X toggles the old always-on free-look (pointer stays captured)
 let infoOpen = false;
 let pendingStart = false;
 let thirdPerson = true;
@@ -108,19 +105,17 @@ function enter() {
   render.ready = false;
 
   active = true;
-  freeLook = false;                  // start in hold-to-look; press X for continuous free-look
   thirdPerson = false;               // default to the first-person cockpit view
   document.body.classList.add("flight-active");
   flyBtn.classList.add("is-on");
   drone.hide();                      // no chase model in first person
   updateViewBtn();
-  updateLookHint();
   addListeners();
-  // Already sitting at the drone's eye — cut straight in and run the sim. The view only
-  // turns while the right mouse button is held, so the cursor stays free to click.
+  // Already sitting at the drone's eye — cut straight in, run the sim, grab the pointer.
   view.camera = makeCamera(st);
   lastT = performance.now();
   rafId = requestAnimationFrame(tick);
+  requestLock();
   paintTelemetry(true);
 }
 
@@ -156,10 +151,10 @@ function step(dt) {
 
   const fwd = (keys.has("w") ? 1 : 0) - (keys.has("s") ? 1 : 0);
   const strafe = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0);
-  const lift = (keys.has("i") ? 1 : 0) - (keys.has("k") ? 1 : 0);
+  const lift = ((keys.has("arrowup") || keys.has("i")) ? 1 : 0) - ((keys.has("arrowdown") || keys.has("k")) ? 1 : 0);
   let ix, iy, iz;
   if (thirdPerson) {
-    // Drone chase view: forward/strafe stay horizontal; I/K change altitude.
+    // Drone chase view: forward/strafe stay horizontal; the up/down arrows or I/K change altitude.
     ix = sinH * fwd + cosH * strafe;
     iy = cosH * fwd - sinH * strafe;
     iz = lift;
@@ -188,8 +183,6 @@ function step(dt) {
   const yaw = ((keys.has("e") || keys.has("arrowright")) ? 1 : 0) -
               ((keys.has("q") || keys.has("arrowleft")) ? 1 : 0);
   if (yaw) st.heading = (st.heading + yaw * YAW_RATE * dt + 360) % 360;
-  const pitchK = (keys.has("arrowup") ? 1 : 0) - (keys.has("arrowdown") ? 1 : 0);
-  if (pitchK) st.tilt = clamp(st.tilt + pitchK * PITCH_RATE * dt, 1, 179);
 
   // Web Mercator stretches horizontal distance by 1/cos(lat); scale so the felt
   // speed is uniform. Altitude (z) is already true metres.
@@ -292,18 +285,16 @@ function setFlightPerf(on) {
 
 function setView(third) {
   thirdPerson = third;
-  lookHeld = false;
   if (third) {
     render.ready = false;
     drone.show();
     if (document.pointerLockElement) document.exitPointerLock();
   } else {
-    drone.hide(); // first person: hold the right mouse button (or press X for free-look)
-    if (freeLook) requestLock();
+    drone.hide();
+    requestLock();
   }
   ui?.classList.toggle("is-unlocked", !third && !locked);
   updateViewBtn();
-  updateLookHint();
 }
 
 function toggleView() { if (active) setView(!thirdPerson); }
@@ -313,14 +304,6 @@ function updateViewBtn() {
   if (b) b.textContent = thirdPerson ? "3rd" : "1st";
 }
 
-function updateLookHint() {
-  const span = ui?.querySelector(".flighthud__lock span");
-  if (!span) return;
-  span.innerHTML = freeLook
-    ? `Free-look on · <kbd>X</kbd> to hold-to-look · <kbd>Esc</kbd> to exit`
-    : `Hold the <kbd>right mouse button</kbd> to look · <kbd>X</kbd> free-look · <kbd>Esc</kbd> to exit`;
-}
-
 /* ---------- input ---------- */
 
 function addListeners() {
@@ -328,9 +311,6 @@ function addListeners() {
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("wheel", onWheel, { passive: false });
   document.addEventListener("mousemove", onMouseMove);
-  document.addEventListener("mousedown", onMouseDown);
-  document.addEventListener("mouseup", onMouseUp);
-  document.addEventListener("contextmenu", onContextMenu);
   document.addEventListener("pointerlockchange", onLockChange);
   const stop = (e) => e.stopPropagation();
   handles = [
@@ -348,9 +328,6 @@ function removeListeners() {
   window.removeEventListener("keyup", onKeyUp);
   window.removeEventListener("wheel", onWheel);
   document.removeEventListener("mousemove", onMouseMove);
-  document.removeEventListener("mousedown", onMouseDown);
-  document.removeEventListener("mouseup", onMouseUp);
-  document.removeEventListener("contextmenu", onContextMenu);
   document.removeEventListener("pointerlockchange", onLockChange);
   handles.forEach((h) => h.remove());
   handles = [];
@@ -361,14 +338,6 @@ function onKeyDown(e) {
   if (infoOpen) return; // the panel is open; ignore flight keys
   const k = e.key.toLowerCase();
   if (k === "v") { toggleView(); return; } // 1st ⇄ 3rd person
-  if (k === "x") { toggleFreeLook(); return; } // continuous free-look ⇄ hold-to-look
-  if (import.meta.env.DEV && (k === "[" || k === "]")) { // DEV-only: dial the drone facing until the sensor points forward
-    const v = drone.bumpHeadingOffset(k === "]" ? 15 : -15);
-    const cal = ui && ui.querySelector(".flighthud__cal");
-    if (cal) cal.textContent = `facing offset ${v}° — press [ / ] to aim the sensor forward`;
-    console.log("[drone] HEADING_OFFSET =", v);
-    return;
-  }
   if (KEYS.has(k)) { e.preventDefault(); keys.add(k); }
 }
 
@@ -389,36 +358,6 @@ function onMouseMove(e) {
   st.tilt = clamp(st.tilt - e.movementY * LOOK_SENS, 1, 179);
 }
 
-// Hold the right mouse button to look: grab the pointer on right-down, release it on
-// right-up. While unheld the cursor is free, so the user can click the HUD or the scene.
-// (In free-look mode the pointer stays captured, so the right button isn't needed.)
-function onMouseDown(e) {
-  if (!active || infoOpen || thirdPerson || freeLook || e.button !== 2) return;
-  e.preventDefault();
-  lookHeld = true;
-  requestLock();
-}
-
-function onMouseUp(e) {
-  if (e.button !== 2 || freeLook) return;
-  lookHeld = false;
-  if (document.pointerLockElement) document.exitPointerLock();
-}
-
-function onContextMenu(e) {
-  if (active && !thirdPerson) e.preventDefault(); // right-drag drives the view; suppress the browser menu
-}
-
-// X toggles the old always-on free-look (continuous mouse-look) vs. hold-right-to-look.
-function toggleFreeLook() {
-  if (!active || thirdPerson) return;
-  freeLook = !freeLook;
-  lookHeld = false;
-  if (freeLook) requestLock();
-  else if (document.pointerLockElement) document.exitPointerLock();
-  updateLookHint();
-}
-
 function onWheel(e) {
   e.preventDefault();
   cruise = clamp(cruise * Math.exp(-e.deltaY * 0.0012), CRUISE_MIN, CRUISE_MAX);
@@ -436,20 +375,16 @@ function requestLock() {
 
 function onLockChange() {
   locked = document.pointerLockElement === view.container;
-  // Hold-to-look: if the button was released before the async lock engaged, let go.
-  if (locked && !lookHeld && !freeLook) { document.exitPointerLock(); return; }
   ui?.classList.toggle("is-unlocked", active && !thirdPerson && !locked);
 }
 
 function onSceneClick(e) {
   if (!active) return;
-  // Third person: click the drone to drop into the cockpit. First person hold-to-look: clicks
-  // stay free. First person free-look: click re-captures the pointer after Esc frees it.
   if (thirdPerson) {
     view.hitTest(e).then((r) => {
       if (r.results.some((x) => drone.isDroneGraphic(x.graphic))) setView(false);
     }).catch(() => {});
-  } else if (freeLook && !locked) {
+  } else if (!locked) {
     requestLock();
   }
 }
@@ -462,7 +397,6 @@ function buildUi() {
     <div class="flighthud__bar">
       <span class="flighthud__badge"><svg class="flighthud__badgeico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M7.7 7.7l2.6 2.6M16.3 7.7l-2.6 2.6M7.7 16.3l2.6-2.6M16.3 16.3l-2.6-2.6"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"/></svg>DRONE</span>
       <span class="flighthud__stat"><i>SPD</i><b id="flSpd">0</b><u>m/s</u></span>
-      <span class="flighthud__stat"><i>ALT</i><b id="flAlt">0</b><u>m</u></span>
       <span class="flighthud__stat"><i>HDG</i><b id="flHdg">0</b><u>°</u></span>
       <button class="flighthud__view" type="button" title="Toggle 1st / 3rd person (V)">3rd</button>
       <button class="flighthud__info" type="button" title="Drone controls" aria-label="Drone controls"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg></button>
@@ -470,20 +404,15 @@ function buildUi() {
     </div>
     <div class="flighthud__keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
-      <span><kbd>I</kbd> / <kbd>K</kbd> up · down</span>
-      <span><kbd>Q</kbd><kbd>E</kbd> turn · scroll speed</span>
+      <span><kbd>&uarr;</kbd> / <kbd>&darr;</kbd> up · down</span>
+      <span><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn · scroll speed</span>
       <span><kbd>V</kbd> / click drone: 1st ⇄ 3rd</span>
     </div>
-    ${import.meta.env.DEV ? '<div class="flighthud__cal" style="text-align:center;font-size:12px;color:#7fe9ff;padding:4px 0 2px;letter-spacing:.02em;">facing offset 270° — press [ / ] to aim the sensor forward</div>' : ''}
-    <div class="flighthud__lock"><span>Hold the <kbd>right mouse button</kbd> to look · <kbd>X</kbd> free-look · <kbd>Esc</kbd> to exit</span></div>`;
+    <div class="flighthud__lock"><span>Click to look around · <kbd>Esc</kbd> to exit</span></div>`;
   document.body.appendChild(ui);
   ui.querySelector(".flighthud__exit").addEventListener("click", exit);
   ui.querySelector(".flighthud__view").addEventListener("click", toggleView);
   ui.querySelector(".flighthud__info").addEventListener("click", () => openInfo(false));
-  if (import.meta.env.DEV) {
-    const cal = ui.querySelector(".flighthud__cal");
-    if (cal && drone) cal.textContent = `facing offset ${drone.getHeadingOffset()}° — press [ / ] to aim the sensor forward`;
-  }
 }
 
 function paintTelemetry(force) {
@@ -491,10 +420,8 @@ function paintTelemetry(force) {
   if (!force && now - telT < 100) return; // ~10 Hz
   telT = now;
   const spd = ui.querySelector("#flSpd");
-  const alt = ui.querySelector("#flAlt");
   const hdg = ui.querySelector("#flHdg");
   if (spd) spd.textContent = Math.round(Math.hypot(vel.x, vel.y, vel.z));
-  if (alt) alt.textContent = Math.round(st.z).toLocaleString();
   if (hdg) hdg.textContent = Math.round(st.heading);
 }
 
@@ -517,12 +444,11 @@ function buildInfo() {
         <ul class="flightinfo__list">
           <li><b>Move:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly forward, left, back and right.</li>
           <li><b>View:</b> starts in first person (cockpit) &mdash; press <kbd>V</kbd> to switch to third person and back.</li>
-          <li><b>Look (first person):</b> hold the <b>right mouse button</b> and move the mouse to aim. Release it to free the cursor for clicking.</li>
-          <li><b>Free-look:</b> press <kbd>X</kbd> to toggle continuous mouse-look (no need to hold the right button).</li>
-          <li><b>Climb / descend:</b> <kbd>I</kbd> rises, <kbd>K</kbd> drops.</li>
-          <li><b>Turn / pitch:</b> <kbd>Q</kbd><kbd>E</kbd> or <kbd>&larr;</kbd><kbd>&rarr;</kbd> turn; <kbd>&uarr;</kbd><kbd>&darr;</kbd> look up and down.</li>
+          <li><b>Look (first person):</b> move the mouse to aim &mdash; click the scene to capture the pointer.</li>
+          <li><b>Climb / descend:</b> <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> rise and drop.</li>
+          <li><b>Turn:</b> <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> turn left and right.</li>
           <li><b>Speed:</b> scroll the mouse wheel to set cruise speed.</li>
-          <li><b>Exit:</b> press <kbd>Esc</kbd> or use <b>Exit</b> to leave drone mode.</li>
+          <li><b>Exit:</b> <kbd>Esc</kbd> frees the cursor; press it again or use <b>Exit</b> to exit drone mode.</li>
         </ul>
         <p class="flightinfo__note">For visual exploration only. Not for navigation.</p>
       </div>
